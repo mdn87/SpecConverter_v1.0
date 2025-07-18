@@ -378,21 +378,13 @@ def hybrid_command(args: argparse.Namespace) -> int:
             hdr_cells[0].text = 'Metric'
             hdr_cells[1].text = 'Value'
             
-            # Get validation report data if available
-            validation_data = {}
-            if args.validation_report:
-                from core.hybrid_analyzer import HybridAnalyzer
-                analyzer = HybridAnalyzer(args.template)
-                analyzer.analyze_document(args.document, args.template)
-                validation_data = analyzer.get_validation_report()
-            
             # Add summary data
             summary_data = [
                 ('Total Content Blocks', str(len(result.content_blocks))),
-                ('PDF Content Length', f"{validation_data.get('pdf_content_length', 'N/A')} characters"),
-                ('Template Patterns Found', f"{validation_data.get('template_patterns', 'N/A')}"),
-                ('Numbering Corrections', f"{validation_data.get('summary', {}).get('blocks_with_numbering_corrections', 'N/A')}"),
-                ('Blocks Not Found in PDF', f"{validation_data.get('summary', {}).get('blocks_not_found_in_pdf', 'N/A')}")
+                ('PDF Content Length', f"{report['pdf_content_length'] if args.validation_report else 'N/A'} characters"),
+                ('Template Patterns Found', f"{report['template_patterns'] if args.validation_report else 'N/A'}"),
+                ('Numbering Corrections', f"{report['summary']['blocks_with_numbering_corrections'] if args.validation_report else 'N/A'}"),
+                ('Blocks Not Found in PDF', f"{report['summary']['blocks_not_found_in_pdf'] if args.validation_report else 'N/A'}")
             ]
             
             for metric, value in summary_data:

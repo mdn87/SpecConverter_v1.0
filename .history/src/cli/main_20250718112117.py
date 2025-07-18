@@ -78,7 +78,6 @@ Examples:
     hybrid_parser.add_argument("--output", default="output", help="Output directory")
     hybrid_parser.add_argument("--save-modular", action="store_true", help="Save modular JSON files")
     hybrid_parser.add_argument("--validation-report", action="store_true", help="Generate detailed validation report")
-    hybrid_parser.add_argument("--generate-word", action="store_true", help="Generate Word document with analysis results")
     
     # Generate command
     generate_parser = subparsers.add_parser("generate", help="Generate document from JSON")
@@ -348,113 +347,6 @@ def hybrid_command(args: argparse.Namespace) -> int:
             
             logger.info(f"Saved modular files to: {modular_dir}")
         
-        # Generate Word document if requested
-        if args.generate_word:
-            logger.info("Generating Word document with analysis results...")
-            word_path = Path(args.output) / f"{base_name}_hybrid_analysis_report.docx"
-            
-            # Create Word document with analysis results
-            from docx import Document
-            from docx.shared import Inches
-            from docx.enum.text import WD_ALIGN_PARAGRAPH
-            
-            doc = Document()
-            
-            # Title
-            title = doc.add_heading('Hybrid Analysis Report', 0)
-            title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            
-            # Document information
-            doc.add_heading('Document Information', level=1)
-            doc.add_paragraph(f"Source Document: {args.document}")
-            doc.add_paragraph(f"Template: {args.template or 'None'}")
-            doc.add_paragraph(f"Analysis Date: {result.template_analysis.analysis_timestamp if result.template_analysis else 'N/A'}")
-            
-            # Summary statistics
-            doc.add_heading('Analysis Summary', level=1)
-            summary_table = doc.add_table(rows=1, cols=2)
-            summary_table.style = 'Table Grid'
-            hdr_cells = summary_table.rows[0].cells
-            hdr_cells[0].text = 'Metric'
-            hdr_cells[1].text = 'Value'
-            
-            # Get validation report data if available
-            validation_data = {}
-            if args.validation_report:
-                from core.hybrid_analyzer import HybridAnalyzer
-                analyzer = HybridAnalyzer(args.template)
-                analyzer.analyze_document(args.document, args.template)
-                validation_data = analyzer.get_validation_report()
-            
-            # Add summary data
-            summary_data = [
-                ('Total Content Blocks', str(len(result.content_blocks))),
-                ('PDF Content Length', f"{validation_data.get('pdf_content_length', 'N/A')} characters"),
-                ('Template Patterns Found', f"{validation_data.get('template_patterns', 'N/A')}"),
-                ('Numbering Corrections', f"{validation_data.get('summary', {}).get('blocks_with_numbering_corrections', 'N/A')}"),
-                ('Blocks Not Found in PDF', f"{validation_data.get('summary', {}).get('blocks_not_found_in_pdf', 'N/A')}")
-            ]
-            
-            for metric, value in summary_data:
-                row_cells = summary_table.add_row().cells
-                row_cells[0].text = metric
-                row_cells[1].text = value
-            
-            # Content blocks analysis
-            doc.add_heading('Content Blocks Analysis', level=1)
-            
-            # Create table for content blocks
-            blocks_table = doc.add_table(rows=1, cols=5)
-            blocks_table.style = 'Table Grid'
-            hdr_cells = blocks_table.rows[0].cells
-            hdr_cells[0].text = 'Block #'
-            hdr_cells[1].text = 'Number'
-            hdr_cells[2].text = 'Level'
-            hdr_cells[3].text = 'Type'
-            hdr_cells[4].text = 'Text Preview'
-            
-            # Add content blocks data
-            for i, block in enumerate(result.content_blocks[:20]):  # Limit to first 20 blocks
-                row_cells = blocks_table.add_row().cells
-                row_cells[0].text = str(i + 1)
-                row_cells[1].text = block.number or 'N/A'
-                row_cells[2].text = str(block.level_number) if block.level_number is not None else 'N/A'
-                row_cells[3].text = block.level_type or 'N/A'
-                row_cells[4].text = (block.text[:50] + '...') if len(block.text) > 50 else block.text
-            
-            if len(result.content_blocks) > 20:
-                doc.add_paragraph(f"... and {len(result.content_blocks) - 20} more blocks")
-            
-            # Template analysis
-            if result.template_analysis and result.template_analysis.bwa_list_levels:
-                doc.add_heading('Template Analysis', level=1)
-                doc.add_paragraph(f"Template Path: {result.template_analysis.template_path}")
-                doc.add_paragraph(f"BWA List Levels Found: {len(result.template_analysis.bwa_list_levels)}")
-                
-                # Template levels table
-                levels_table = doc.add_table(rows=1, cols=3)
-                levels_table.style = 'Table Grid'
-                hdr_cells = levels_table.rows[0].cells
-                hdr_cells[0].text = 'Level'
-                hdr_cells[1].text = 'BWA Style'
-                hdr_cells[2].text = 'Format'
-                
-                for level, level_info in result.template_analysis.bwa_list_levels.items():
-                    row_cells = levels_table.add_row().cells
-                    row_cells[0].text = str(level)
-                    row_cells[1].text = level_info.get('style_name', 'N/A')
-                    row_cells[2].text = level_info.get('format', 'N/A')
-            
-            # Validation results
-            if result.validation_results and result.validation_results.errors:
-                doc.add_heading('Validation Issues', level=1)
-                for error in result.validation_results.errors:
-                    doc.add_paragraph(f"Error: {error.message}", style='List Bullet')
-            
-            # Save the document
-            doc.save(str(word_path))
-            logger.info(f"Generated Word report: {word_path}")
-        
         return 0
         
     except Exception as e:
@@ -610,8 +502,6 @@ def main() -> int:
         return extract_command(args)
     elif args.command == "pdf-extract":
         return pdf_extract_command(args)
-    elif args.command == "hybrid":
-        return hybrid_command(args)
     elif args.command == "generate":
         return generate_command(args)
     elif args.command == "template" and args.template_command == "analyze":

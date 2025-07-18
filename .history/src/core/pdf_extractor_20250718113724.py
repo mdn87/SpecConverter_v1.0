@@ -358,14 +358,9 @@ class PDFExtractor:
         
         # Try different patterns
         patterns = [
-            r'SECTION\s+(\d+[\-\s]\d+[\-\s]\d+)',
+            r'SECTION\s+(\d+\s+\d+\s+\d+)',
             r'(\d+\.\d+\.\d+)',
-            r'(\d+[\-\s]\d+[\-\s]\d+)',
-            r'(\d+\.\d+)',                   # 1.0, 2.0, etc.
-            r'(\d+\.\d+)\s+[A-Z]',           # 1.01 DESCRIPTION -> 1.01
-            r'([A-Z])\.\s+',                 # A. -> A
-            r'(\d+)\.\s+',                   # 1. -> 1
-            r'([a-z])\.\s+',                 # a. -> a
+            r'(\d+\s+\d+\s+\d+)',
             r'PART\s+(\d+)',
             r'DIVISION\s+(\d+)',
         ]
@@ -381,22 +376,13 @@ class PDFExtractor:
     def _determine_level(self, section_number: str) -> int:
         """Determine the hierarchical level of a section."""
         if 'DIVISION' in section_number.upper():
-            return 0
-        elif 'PART' in section_number.upper():
             return 1
-        elif section_number.count('.') == 2 or section_number.count('-') == 2:
-            return 0  # Main section like 26.05.00 or 26-05-00
-        elif section_number.count('.') == 1:
-            if section_number.endswith('.0'):
-                return 0  # 1.0, 2.0, etc.
-            else:
-                return 1  # 1.01, 2.01, etc.
-        elif section_number.isupper() and len(section_number) == 1:
-            return 2  # A, B, C, etc.
-        elif section_number.isdigit():
-            return 3  # 1, 2, 3, etc.
-        elif section_number.islower() and len(section_number) == 1:
-            return 4  # a, b, c, etc.
+        elif 'PART' in section_number.upper():
+            return 2
+        elif section_number.count('.') == 2 or section_number.count(' ') == 2:
+            return 3  # Main section like 26.05.00
+        elif section_number.count('.') == 1 or section_number.count(' ') == 1:
+            return 4  # Subsection like 26.05
         else:
             return 5  # Default level
 
