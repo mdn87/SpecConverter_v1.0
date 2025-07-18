@@ -1,0 +1,28 @@
+# Example Batch Job Configuration
+# Copy this file and modify for your specific batch processing needs
+
+name: "Example Batch Job"
+description: "Process example specification documents"
+
+input:
+  directory: "examples/"
+  pattern: "*.docx"
+  exclude: ["draft_*", "*_old.*"]
+
+template: "config/templates/test_template_cleaned.docx"
+output_directory: "output/batch_example/"
+
+options:
+  extract_only: false
+  validate_only: false
+  skip_existing: true
+  parallel_processing: true
+  save_modular_files: true
+  save_error_reports: true
+
+# Advanced options
+advanced:
+  max_workers: 2
+  timeout_minutes: 15
+  memory_limit_mb: 256
+  log_level: "INFO" 

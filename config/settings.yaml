@@ -1,0 +1,46 @@
+# SpecConverter v1.0 - Global Settings
+
+# Default paths
+default_template: "config/templates/test_template_cleaned.docx"
+output_directory: "output"
+log_level: "INFO"
+
+# Processing options
+validation:
+  max_iterations: 10
+  auto_correct: true
+  report_errors: true
+  save_error_reports: true
+
+# Batch processing
+batch:
+  max_workers: 4
+  timeout_minutes: 30
+  skip_existing: true
+  parallel_processing: true
+
+# Output options
+output:
+  save_modular_files: true
+  save_error_reports: true
+  json_indent: 2
+  include_timestamp: true
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_logging: false
+  log_file: "logs/specconverter.log"
+
+# File patterns
+patterns:
+  docx_files: "*.docx"
+  exclude_patterns: ["draft_*", "*_old.*", "~$*"]
+  backup_suffix: ".backup"
+
+# Performance
+performance:
+  chunk_size: 1000
+  memory_limit_mb: 512
+  temp_directory: "temp" 
